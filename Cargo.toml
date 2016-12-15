@@ -1,0 +1,6 @@
+[package]
+name = "bml"
+version = "0.1.0"
+authors = ["David Holroyd <dave@badgers-in-foil.co.uk>"]
+
+[dependencies]
