@@ -4,6 +4,7 @@ use std::iter::Peekable;
 #[derive(Debug)]
 enum SExp {
     Sym(String),
+    LString(String),
     List(Vec<SExp>)
 }
 
@@ -84,6 +85,37 @@ impl<'a> Parser<'a> {
         Ok(SExp::Sym(s))
     }
 
+    fn string(&mut self) -> ParseResult {
+        self.expect('"');
+        let mut s = String::new();
+        loop {
+            let chr:char;
+            match self.i.peek() {
+                None => break,
+                Some(c) => chr = *c
+            }
+            match chr {
+                '\\' => {
+                    self.expect('\\');
+                    match self.i.peek() {
+                        Some(&'n') => s.push('\n'),
+                        Some(&'t') => s.push('\t'),
+                        Some(&'r') => s.push('\r'),
+                        Some(&'"') => s.push('"'),
+                        Some(&'\\') => s.push('\\'),
+                        Some(_) => return Err(ParseError{msg:"invalud escape sequence".to_string()}),
+                        None => return Err(ParseError{msg:"end of input within string literal".to_string()})
+                    }
+                },
+                '"' => break,
+                _ => s.push(chr)
+            }
+            self.i.next();
+        }
+        self.expect('"');
+        Ok(SExp::LString(s))
+    }
+
     fn atom(&mut self) -> ParseResult {
         let chr:char;
         match self.i.peek() {
@@ -92,8 +124,9 @@ impl<'a> Parser<'a> {
         }
         match chr {
             '('         => self.list(),
+            '"'         => self.string(),
             'a'...'z'   => self.sym(),
-            chr         => Err(ParseError{msg:format!("expected LIST or SYMBOL, but found '{}'", chr)})
+            chr         => Err(ParseError{msg:format!("expected LIST, STRING or SYMBOL, but found '{}'", chr)})
         }
     }
 
