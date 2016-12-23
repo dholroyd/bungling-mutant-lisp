@@ -1,10 +1,12 @@
 mod parse;
+mod symtable;
 
 use std::env;
 use std::io::prelude::*;
 use std::fs::File;
 use parse::Parser;
 use parse::ParseError;
+use symtable::SymTable;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -13,10 +15,11 @@ fn main() {
 
     let mut b = String::new();
     f.read_to_string(&mut b).unwrap();
-    let i = &mut b.chars().peekable();
-    let mut parser = Parser::new(i);
+    let i = b.chars().peekable();
+    let st = SymTable::new();
+    let mut parser = Parser::new(st, i);
     match parser.compilation_unit() {
-        Ok(s) => println!("Ok! {:?}", s),
+        Ok(s) => println!("result: {:?}", s),
         Err(e) => println!("parse failed: {}", e.msg)
     }
 }
