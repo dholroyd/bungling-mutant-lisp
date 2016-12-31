@@ -59,7 +59,6 @@ impl<'a> Parser<'a> {
                 Some(_) => break
             }
             let c = self.next().unwrap();
-            println!("skipped <{}>", esc(c));
         }
     }
 
@@ -80,7 +79,6 @@ impl<'a> Parser<'a> {
         if c != e {  // TODO None
             panic!("expected '{}', got '{}'", esc(e), esc(c));
         }
-        println!("found expected <{}>", esc(c));
     }
 
     fn peek_matches(&self, e:char) -> bool {
