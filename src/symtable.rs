@@ -1,6 +1,8 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 use std::collections::HashMap;
+use std::hash::Hash;
+use std::hash::Hasher;
 
 #[derive(Debug)]
 pub struct Symbol(String);
@@ -14,6 +16,13 @@ pub struct SymTable {
 impl PartialEq for Symbol {
     fn eq(&self, other: &Symbol) -> bool {
         self as *const _ == other as *const _
+    }
+}
+impl Eq for Symbol {
+}
+impl Hash for Symbol {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        state.write_usize(self as *const _ as usize);
     }
 }
 
