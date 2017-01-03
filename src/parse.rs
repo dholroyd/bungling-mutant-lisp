@@ -4,7 +4,7 @@ use std::iter::Peekable;
 use symtable::SymTable;
 use symtable::SymbolRef;
 
-#[derive(Debug)]
+#[derive(Debug,Eq,PartialEq)]
 pub enum SExp {
     Sym(SymbolRef),
     LString(String),
