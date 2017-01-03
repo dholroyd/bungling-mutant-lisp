@@ -1,11 +1,13 @@
 mod parse;
 mod symtable;
+mod interpret;
 
 use std::env;
 use std::io::prelude::*;
 use std::fs::File;
 use parse::Parser;
 use parse::ParseError;
+use parse::SExp;
 use symtable::SymTable;
 
 fn main() {
@@ -17,9 +19,14 @@ fn main() {
     f.read_to_string(&mut b).unwrap();
     let i = b.chars().peekable();
     let st = SymTable::new();
+    let println_sym = st.sym_for("println");
     let mut parser = Parser::new(st, i);
     match parser.compilation_unit() {
-        Ok(s) => println!("result: {:?}", s),
+        Ok(s) => {
+            let interpreter = interpret::Interpreter::new();
+            interpreter.define_native(println_sym, |args:&[SExp]| println!("println: {:?}", args) );
+            interpreter.start(s)
+        },
         Err(e) => println!("parse failed: {}", e.msg)
     }
 }
