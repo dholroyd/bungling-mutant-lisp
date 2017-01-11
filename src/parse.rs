@@ -8,9 +8,11 @@ use symtable::SymbolRef;
 pub enum SExp {
     Sym(SymbolRef),
     LString(String),
-    List(Vec<SExp>)
+    List(Vec<SExp>),
+    Num(i32)
 }
 
+#[derive(Debug)]
 pub struct ParseError {
     pub msg:String
 }
@@ -129,7 +131,30 @@ impl<'a> Parser<'a> {
         Ok(SExp::LString(s))
     }
 
-    fn atom(&self) -> ParseResult {
+    fn num(&self) -> ParseResult {
+        let mut val:i32 = 0;
+        loop {
+            match self.peek() {
+                None => break,
+                Some(c @ '0' ... '9') => {
+                    if let Some(mul) = val.checked_mul(10) {
+                        if let Some(add) = mul.checked_add(c.to_digit(10).unwrap() as i32) {
+                            val = add;
+                        } else {
+                            return Err(ParseError{msg:"numeric constant too large".to_string()});
+                        }
+                    } else {
+                        return Err(ParseError{msg:"numeric constant too large".to_string()});
+                    }
+                },
+                Some(_) => break
+            }
+            self.next();
+        }
+        Ok(SExp::Num(val))
+    }
+
+    pub fn sexp(&self) -> ParseResult {
         let chr:char;
         match self.peek() {
             None => return Err(ParseError{msg:"end of input while expecting an ATOM".to_string()}),
@@ -139,6 +164,7 @@ impl<'a> Parser<'a> {
             '('         => self.list(),
             '"'         => self.string(),
             'a'...'z'   => self.sym(),
+            '0'...'9'   => self.num(),  // negative numeric constants just not possible ATM
             chr         => Err(ParseError{msg:format!("expected LIST, STRING or SYMBOL, but found '{}'", chr)})
         }
     }
@@ -148,7 +174,7 @@ impl<'a> Parser<'a> {
         self.skip_ws();
         let mut v:Vec<SExp> = Vec::new();
         while !self.peek_matches(')') {
-            v.push(try!(self.atom()));
+            v.push(try!(self.sexp()));
             self.skip_ws();
         }
         self.expect(')');
@@ -158,6 +184,39 @@ impl<'a> Parser<'a> {
     pub fn compilation_unit(&mut self) -> ParseResult {
         self.skip_ws();
         self.list()
+    }
+
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Parser;
+    use super::SExp;
+    use super::ParseResult;
+    use symtable::SymTable;
+
+    fn parse_sexp(text: &str) -> ParseResult {
+        let st = SymTable::new();
+        let mut p = Parser::new(st, text.chars().peekable());
+        p.sexp()
+    }
+
+    #[test]
+    fn num() {
+        let r = parse_sexp("1234").unwrap();
+        if let SExp::Num(v) = r {
+            assert_eq!(1234, v);
+        } else {
+            panic!("Expected SExp::Num, got {:?}", r);
+        }
+    }
+
+    #[test]
+    fn overflow_num() {
+        let r = parse_sexp("4294967296");
+        if r.is_ok() {
+            panic!("Expected failure parsing number larger than i32, got {:?}", r);
+        }
     }
 
 }
