@@ -9,7 +9,8 @@ pub enum SExp {
     Sym(SymbolRef),
     LString(String),
     List(Vec<SExp>),
-    Num(i32)
+    Num(i32),
+    Nil
 }
 
 #[derive(Debug)]
