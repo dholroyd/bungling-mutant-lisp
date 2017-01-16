@@ -10,6 +10,7 @@ pub enum SExp {
     LString(String),
     List(Vec<SExp>),
     Num(i32),
+    Boolean(bool),
     Nil
 }
 
@@ -166,7 +167,18 @@ impl<'a> Parser<'a> {
             '"'         => self.string(),
             'a'...'z'   => self.sym(),
             '0'...'9'   => self.num(),  // negative numeric constants just not possible ATM
+            '#'         => self.boolean(),
             chr         => Err(ParseError{msg:format!("expected LIST, STRING or SYMBOL, but found '{}'", chr)})
+        }
+    }
+
+    fn boolean(&self) -> ParseResult {
+        self.next();  // discard '#'
+        match self.next() {
+            None => Err(ParseError{msg:"end of input within boolean literal".to_string()}),
+            Some('t') => Ok(SExp::Boolean(true)),
+            Some('f') => Ok(SExp::Boolean(false)),
+            Some(c) => Err(ParseError{msg:format!("invalid constant '#{}'", esc(c))}),
         }
     }
 

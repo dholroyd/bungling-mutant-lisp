@@ -18,7 +18,7 @@ fn main() {
     f.read_to_string(&mut b).unwrap();
     let i = b.chars().peekable();
     let st = SymTable::new();
-    let interpreter = interpret::Interpreter::new();
+    let interpreter = interpret::Interpreter::new(&st);
     builtin::init(&st, &interpreter);
     let mut parser = Parser::new(st, i);
     match parser.compilation_unit() {
