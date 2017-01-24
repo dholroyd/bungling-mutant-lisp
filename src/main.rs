@@ -8,6 +8,7 @@ use std::io::prelude::*;
 use std::fs::File;
 use parse::Parser;
 use symtable::SymTable;
+use parse::SExp;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -22,8 +23,11 @@ fn main() {
     builtin::init(&st, &interpreter);
     let mut parser = Parser::new(st, i);
     match parser.compilation_unit() {
+        Ok(SExp::List(l)) => {
+            print!("end: {:?}", interpreter.eval_expressions(&l));
+        },
         Ok(s) => {
-            print!("{:?}", interpreter.eval(&s));
+            print!("end: {:?}", interpreter.eval(&interpret::Data::DExp(s)));
         },
         Err(e) => println!("parse failed: {}", e.msg)
     }

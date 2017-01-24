@@ -4,7 +4,7 @@ use std::iter::Peekable;
 use symtable::SymTable;
 use symtable::SymbolRef;
 
-#[derive(Debug,Eq,PartialEq)]
+#[derive(Debug,Eq,PartialEq,Clone)]
 pub enum SExp {
     Sym(SymbolRef),
     LString(String),
@@ -195,8 +195,15 @@ impl<'a> Parser<'a> {
     }
 
     pub fn compilation_unit(&mut self) -> ParseResult {
-        self.skip_ws();
-        self.list()
+        let mut v:Vec<SExp> = Vec::new();
+        loop {
+            self.skip_ws();
+            match self.peek() {
+                Some(_) => v.push(try!(self.sexp())),
+                None => break,
+            }
+        }
+        Ok(SExp::List(v))
     }
 
 }
